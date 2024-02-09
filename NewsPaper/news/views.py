@@ -6,7 +6,8 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from .models import Post
 from .filters import PostFilter
 from .forms import NewForm
-
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin
 
 
 class NewsList(ListView):
@@ -34,6 +35,10 @@ class NewsList(ListView):
         # Возвращаем из функции отфильтрованный список новостей
         return self.filterset.qs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['filterset'] = self.filterset
+        return context
 
 class NewDetail(DetailView):
     # Модель всё та же, но мы хотим получать информацию по отдельной новости
@@ -48,7 +53,7 @@ class NewsSearch(ListView):
     # Указываем модель, объекты которой мы будем выводить
     model = Post
     # Поле, которое будет использоваться для сортировки объектов
-    ordering = 'dateCreation'
+    ordering = '-dateCreation'
     # Указываем имя шаблона, в котором будут все инструкции о том,
     # как именно пользователю должны быть показаны наши объекты
     template_name = 'flatpages/search.html'
@@ -77,8 +82,8 @@ class NewsSearch(ListView):
         return context
 
 
-class NewCreate(CreateView):
-    permission_required = ('news.post_create',)
+class NewCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = ('news.add_post',)
     raise_exception = True
     # Указываем нашу разработанную форму
     form_class = NewForm
@@ -95,8 +100,8 @@ class NewCreate(CreateView):
         return super().form_valid(form)
 
 
-class NewUpdate(UpdateView):
-    permission_required = ('news.post_edit',)
+class NewUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = ('news.change_post',)
     form_class = NewForm
     model = Post
     template_name = 'flatpages/post_edit.html'
@@ -108,7 +113,8 @@ class NewUpdate(UpdateView):
 
 
 # Представление удаляющее пост
-class NewDelete(DeleteView):
+class NewDelete(LoginRequiredMixin,PermissionRequiredMixin, DeleteView):
+    permission_required = ('news.delete_post',)
     model = Post
     template_name = 'flatpages/post_delete.html'
     success_url = reverse_lazy('news_list')

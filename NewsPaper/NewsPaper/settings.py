@@ -29,6 +29,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+#добавить бэкенды аутентификации
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend', #встроенный бэкенд Django реализующий аутентификацию по username
+    'allauth.account.auth_backends.AuthenticationBackend', #бэкенд аутентификации, предоставленный пакетом allauth
+]
 
 # Application definition
 
@@ -44,6 +49,11 @@ INSTALLED_APPS = [
     'django.contrib.flatpages',
     'fpages',
     'django_filters',
+    'accounts',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.yandex'
 ]
 
 SITE_ID = 1
@@ -56,7 +66,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware'
+    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
+    'allauth.account.middleware.AccountMiddleware'
 ]
 
 ROOT_URLCONF = 'NewsPaper.urls'
@@ -69,13 +80,15 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',
+                'django.template.context_processors.request', # в конфигурации шаблонов присутствует контекстный процессор
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
         },
     },
 ]
+
+
 
 WSGI_APPLICATION = 'NewsPaper.wsgi.application'
 
@@ -135,3 +148,32 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATICFILES_DIRS = [
     BASE_DIR / "static"
 ]
+
+LOGIN_REDIRECT_URL = "/news"
+
+# В файл настроек проекта мы внесём дополнительные параметры,
+# в которых укажем обязательные и необязательные поля.
+# Обязательность полей остаётся на усмотрение разработчика.
+# В нашем случае мы укажем следующую комбинацию параметров:
+
+ACCOUNT_EMAIL_REQUIRED = True # поле email является обязательным
+ACCOUNT_UNIQUE_EMAIL = True # поле email является уникальным
+ACCOUNT_USERNAME_REQUIRED = False # username необязательный
+ACCOUNT_AUTHENTICATION_METHOD = 'email' #аутентификация будет происходить посредством электронной почты
+ACCOUNT_EMAIL_VERIFICATION = 'none' #верификация почты отсутствует
+
+ACCOUNT_FORMS = {"signup": "accounts.forms.CustomSignupForm"}
+
+# Provider specific settings
+SOCIALACCOUNT_PROVIDERS = {
+    'yandex': {
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        'APP': {
+            'client_id': 'db18c2fc88c54f45b8cd9104a703ae7a',
+            'secret': '19dd29fb55ea422d8fd2400aa000509c',
+            'key': ''
+        }
+    }
+}
